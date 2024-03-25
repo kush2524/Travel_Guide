@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Selection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        button.search {
+            background-color: #6c757d;
+        }
+        button.live-location {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Select Your City</h1>
+        <form id="cityForm" method="POST" action="{% url 'index' %}">
+            {% csrf_token %}
+            <input id="cityInput" name="city" type="text" placeholder="Enter your city">
+            <button type="submit" class="search">Search</button>
+        </form>
+        <br>
+        <button onclick="selectCity('Mumbai')">Mumbai</button>
+        <button onclick="selectCity('Delhi')">Delhi</button>
+        <button onclick="selectCity('Kolkata')">Kolkata</button>
+        <button onclick="selectCity('Bangalore')">Bangalore</button>
+        <br>
+       
+        
+        <button class="live-location" onclick="continueWithLiveLocation()">Continue with Live Location</button>
+        <form id="locationForm" action="{% url 'search_results' %}" method="POST" style="display: none;">
+            <input type="hidden" id="latitudeInput" name="latitude">
+            <input type="hidden" id="longitudeInput" name="longitude">
+            {% csrf_token %}
+        </form>
+    
+    
+        
+    </div>
+
+    <script>
+        function selectCity(city) {
+            document.getElementById('cityInput').value = city;
+        }
+
+        function continueWithLiveLocation() {
+            // Check if geolocation is supported
+            if (navigator.geolocation) {
+                // Get the user's current position
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    // Get latitude and longitude
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Add hidden fields to the form with live location data
+                    const form = document.getElementById('cityForm');
+                    const latitudeField = document.createElement('input');
+                    latitudeField.type = 'hidden';
+                    latitudeField.name = 'latitude';
+                    latitudeField.value = latitude;
+                    form.appendChild(latitudeField);
+                    
+                    const longitudeField = document.createElement('input');
+                    longitudeField.type = 'hidden';
+                    longitudeField.name = 'longitude';
+                    longitudeField.value = longitude;
+                    form.appendChild(longitudeField);
+                    
+                    // Submit the form
+                    form.submit();
+                });
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        }
+    </script>
+</body>
+</html>

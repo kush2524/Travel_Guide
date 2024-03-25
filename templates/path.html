@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driving Route</title>
+    <!-- Include Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100%; }
+        .red-dot {
+            background-color: red;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        var routeData = {{ route_data|safe }};
+        
+        // Initialize map
+        var map = L.map('map').setView([28.634069, 77.21694], 13);
+
+        // Add Tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add polyline to represent the route
+        var routePolyline = L.polyline(routeData.route.geometry.coordinates, { color: 'blue' }).addTo(map);
+
+        // Fit the map to the bounds of the polyline
+        map.fitBounds(routePolyline.getBounds());
+
+        // Extract start and end points
+        var startPointCoords = routeData.route.properties.segments[0].steps[0].start_location;
+        var endPointCoords = routeData.route.properties.segments[0].steps[routeData.route.properties.segments[0].steps.length - 1].end_location;
+
+        // Define custom icon for start point
+        var startIcon = L.divIcon({
+            className: 'red-dot', // Apply CSS class
+            iconSize: [12, 12], // Size of the icon
+            iconAnchor: [6, 6] // Position of the icon's anchor point
+        });
+
+        // Define custom icon for end point
+        var endIcon = L.divIcon({
+            className: 'red-dot', // Apply CSS class
+            iconSize: [12, 12], // Size of the icon
+            iconAnchor: [6, 6] // Position of the icon's anchor point
+        });
+
+        // Add markers for start and end points with custom icons
+        L.marker([startPointCoords[1], startPointCoords[0]], { icon: startIcon }).addTo(map).bindPopup('<b>Start Point</b>').openPopup();
+        L.marker([endPointCoords[1], endPointCoords[0]], { icon: endIcon }).addTo(map).bindPopup('<b>End Point</b>').openPopup();
+    </script>
+</body>
+</html>

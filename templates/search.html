@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+
+    <h2>Preferred Genres in {{ request.session.selected_city}}</h2>
+    <div>
+        <button onclick="submitForm('Museums')">Museums</button>
+        <button onclick="submitForm('Restaurants')">Restaurants</button>
+        <button onclick="submitForm('Beaches')">Beaches</button>
+        <button onclick="submitForm('Rivers')">Rivers</button>
+        <!-- Add more buttons for other genres -->
+    </div>
+
+    <!-- Form to submit selected genre -->
+    <form id="genreForm" method="POST" action="{% url 'search_results' %}">
+        {% csrf_token %}
+        <input type="text" name="selected_genre" id="selectedGenre">
+        <button type="submit">Submit</button>
+    </form>
+
+    <!-- JavaScript function to submit form with selected genre -->
+    <script>
+        function submitForm(genre) {
+            // Set the selected genre value in the hidden input field
+            document.getElementById('selectedGenre').value = genre;
+            // Submit the form
+            document.getElementById('genreForm').submit();
+        }
+    </script>
+</body>
+</html>

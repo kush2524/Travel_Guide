@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Map</title>
+    <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+    <style>
+        /* Set the size of the map container */
+        #mapContainer {
+            width: 100%;
+            height: 100vh; /* Use viewport height for full-screen */
+            position: relative;
+        }
+
+        /* Style for the zoom slider */
+        #zoomSlider {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 200px;
+            z-index: 1000;
+        }
+
+        /* Style for custom marker */
+        .custom-marker {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            cursor: pointer;
+            position: absolute;
+            transform: translate(-50%, -50%); /* Center the marker */
+        }
+
+        /* Style for route box */
+        .route-box {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        /* Style for route button */
+        #getRouteBtn {
+            padding: 8px 16px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Style for bold location name */
+        #locationName {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Map container -->
+    <div id="mapContainer"></div>
+
+    <!-- Route box -->
+    <div id="routeBox" class="route-box" style="display: none;">
+        <h3>Route to Location</h3>
+        <p>Name: <span id="locationName"></span></p>
+        <p>Latitude: <span id="latitude"></span></p>
+        <p>Longitude: <span id="longitude"></span></p>
+        <button id="getRouteBtn">Get Route</button>
+    </div>
+
+    <!-- Zoom slider -->
+    <input id="zoomSlider" type="range" min="1" max="20" value="10">
+
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" type="text/javascript" charset="utf-8"></script>
+    
+    <script>
+        // Initialize the platform object
+        var platform = new H.service.Platform({
+            'apikey': 'FfI5QQOFQUYfxoHtkujlgYPHpUdxFubsDw_affYPZ3A'
+        });
+    
+        // Obtain the default map types from the platform object
+        var maptypes = platform.createDefaultLayers();
+    
+        // Set the coordinates
+        var latitude = {{start_latitude}};   // Replace with your latitude
+        var longitude ={{start_longitude}}; // Replace with your longitude
+        
+    
+        // Instantiate (and display) the map
+        var map = new H.Map(
+            document.getElementById('mapContainer'),
+            maptypes.vector.normal.map,
+            {
+                zoom: 15,
+                center: { lng: longitude, lat: latitude }
+            });
+    
+        // Enable map events
+        var mapEvents = new H.mapevents.MapEvents(map);
+        var behavior = new H.mapevents.Behavior(mapEvents);
+    
+        // Enable default UI
+        var ui = H.ui.UI.createDefault(map, maptypes);
+    
+        // Add a marker at the specified coordinates
+        var marker = new H.map.Marker({ lng: longitude, lat: latitude });
+        map.addObject(marker);
+    
+        // Search for places using Geocoding and Search API
+        var geocodingService = platform.getSearchService();
+        var params = {
+            'at': latitude + ',' + longitude,  // Location coordinates
+            'q': '{{genr}}'// Search query
+        };
+        geocodingService.discover(params, onSuccess, onError);
+    
+        function onSuccess(result) {
+            // Loop through the results and add markers for each place
+            result.items.forEach(function(place) {
+                // Create a custom marker
+                var customMarker = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                customMarker.setAttribute('class', 'custom-marker');
+                customMarker.setAttribute('width', '24');
+                customMarker.setAttribute('height', '24');
+                customMarker.innerHTML = '<circle cx="12" cy="12" r="10" fill="red" />';
+    
+                // Function to update marker position
+                function updateMarkerPosition() {
+                    var position = map.geoToScreen({ lat: place.position.lat, lng: place.position.lng });
+                    customMarker.style.left = position.x + 'px';
+                    customMarker.style.top = position.y + 'px';
+                }
+    
+                // Update marker position when map is loaded or zoomed
+                map.addEventListener('mapviewchange', updateMarkerPosition);
+                map.addEventListener('mapviewchangeend', updateMarkerPosition);
+    
+                // Add click event listener to the marker
+                customMarker.addEventListener('click', function() {
+                    // Display the latitude and longitude of the clicked marker
+                    document.getElementById('latitude').innerText = place.position.lat;
+                    document.getElementById('longitude').innerText = place.position.lng;
+                    // Display the name of the location
+                    document.getElementById('locationName').innerText = place.title;
+                    // Show the route box
+                    document.getElementById('routeBox').style.display = 'block';
+                });
+    
+                // Add the marker to the map container
+                document.getElementById('mapContainer').appendChild(customMarker);
+    
+                // Call updateMarkerPosition initially to set marker position
+                updateMarkerPosition();
+            });
+        }
+    
+        function onError(error) {
+            console.error('Error occurred:', error);
+        }
+
+        // Function to get route when the "Get Route" button is clicked
+        document.getElementById('getRouteBtn').addEventListener('click', function() {
+            // Get the latitude and longitude of the clicked marker
+            var latitude = document.getElementById('latitude').innerText;
+            var longitude = document.getElementById('longitude').innerText;
+            // Redirect to the route page with the latitude and longitude parameters
+            window.location.href = '/route?latitude=' + latitude + '&longitude=' + longitude;
+        });
+    </script>
+</body>
+</html>
+
